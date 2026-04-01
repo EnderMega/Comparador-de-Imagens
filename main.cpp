@@ -101,6 +101,10 @@ unsigned char parseHeader(char* arquivo, header* h)
 
 			++numtokens;
 		}
+		else
+		{
+			return false;
+		}
 	}
 
 	h->offset = i;
@@ -254,17 +258,17 @@ int main()
 
 		if (!primeiro && !segundo)
 		{
-			write(1, "Nem um dos dois arquivos possui o número mágico (P6).\n", 56);
+			write(1, "Nem um dos dois arquivos possui o número mágico (P6) ou está corrompido.\n", 76);
 			return -1;
 		}
 		else if (!primeiro)
 		{
-			write(1, "O primeiro arquivo não possui o número mágico (P6).\n", 55);
+			write(1, "O primeiro arquivo não possui o número mágico (P6) ou está corrompido.\n", 75);
 			return -2;
 		}
 		else if (!segundo)
 		{
-			write(1, "O segundo arquivo não possui o número mágico (P6).\n", 54);
+			write(1, "O segundo arquivo não possui o número mágico (P6) ou está corrompido.\n", 74);
 			return -3;
 		}
 	}
