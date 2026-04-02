@@ -197,8 +197,6 @@ int main()
 	read(hArquivo1, arquivo1, tam1.st_size);
 	read(hArquivo2, arquivo2, tam2.st_size);
 
-	header aaa;
-
 	// Vamos nos basear na menor intersecção das duas imagens
 	/*
 		 _______________
