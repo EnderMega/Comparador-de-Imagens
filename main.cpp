@@ -1,9 +1,4 @@
-//TODO: Verificar se o código realmente funciona em C e C++
-#ifdef __cplusplus
 #include <cstdlib>
-#else
-#include <stdlib.h>
-#endif
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -121,48 +116,13 @@ int prepararPPM(char* arquivo, header* h)
 	//      ^-+1-v
 	int offset = 3;
 
-	char str[51];
-	itoa(h->largura, str, 10);
-	{
-		int i = 0;
-		for (; str[i] != 0; i++)
-		{
-			arquivo[i + offset] = str[i];
-			str[i] = 0;
-		}
-		offset += i;
-	}
-	for (int i = 0; str[i] != 0; i++)
-		str[i] = 0;
-
+	offset += itoa2(h->largura, arquivo + offset, 10);
 	arquivo[offset++] = ' ';
 
-	itoa(h->altura, str, 10);
-	{
-		int i = 0;
-		for (; str[i] != 0; i++)
-		{
-			arquivo[i + offset] = str[i];
-			str[i] = 0;
-		}
-		offset += i;
-	}
-	for (int i = 0; str[i] != 0; i++)
-		str[i] = 0;
-
+	offset += itoa2(h->altura, arquivo + offset, 10);
 	arquivo[offset++] = '\n';
 
-	itoa(h->maxVal, str, 10);
-	{
-		int i = 0;
-		for (; str[i] != 0; i++)
-		{
-			arquivo[i + offset] = str[i];
-			str[i] = 0;
-		}
-		offset += i;
-	}
-
+	offset += itoa2(h->maxVal, arquivo + offset, 10);
 	arquivo[offset++] = '\n';
 
 	return offset;
@@ -190,11 +150,11 @@ int main()
 	{
 		write(1, "Arquivo não encontrado.\n", 25);
 
-		return -10;
+		return 1;
 	}
 
 #ifdef TESTE
-	copiar("fotos/perlica2.ppm", nome2);
+	copiar("fotos/torto.ppm", nome2);
 #else
 	write(1, "Segunda imagem  (incluir extensão .ppm): ", 42);
 	read(2, nome2, 255);
@@ -210,7 +170,7 @@ int main()
 	{
 		write(1, "Arquivo não encontrado.\n", 25);
 
-		return -10;
+		return 2;
 	}
 
 #ifdef NOMEFINAL
@@ -259,17 +219,17 @@ int main()
 		if (!primeiro && !segundo)
 		{
 			write(1, "Nem um dos dois arquivos possui o número mágico (P6) ou está corrompido.\n", 76);
-			return -1;
+			return 3;
 		}
 		else if (!primeiro)
 		{
 			write(1, "O primeiro arquivo não possui o número mágico (P6) ou está corrompido.\n", 75);
-			return -2;
+			return 4;
 		}
 		else if (!segundo)
 		{
 			write(1, "O segundo arquivo não possui o número mágico (P6) ou está corrompido.\n", 74);
-			return -3;
+			return 5;
 		}
 	}
 
@@ -322,7 +282,7 @@ int main()
 		write(1, "\n\e[1mAVISO!!!\e[22m\nO valor de profundidade dos arquivos é diferente.\n\e[3m[SAIR_DIFF_PROFUNDIDADE \e[1mNÃO\e[22m definido]\e[23m\n", 127);
 #else
 		write(1, "\n\e[1mERRO!!!\e[22m\nO valor de profundidade dos arquivos é diferente.\n\e[3m[SAIR_DIFF_PROFUNDIDADE definido]\e[23m\n\n", 113);
-		return -4;
+		return 6;
 #endif
 	}
 
@@ -343,15 +303,13 @@ int main()
 
 	char* arquivoFinal;
 	{
-		//     Ao mesmo tempo que é meio gambiarra é genial. Vamos preparar um falso header PPM e isso já calcula o offset pra gente (se não fizesse desse jeito ia ter que
+		//   Ao mesmo tempo que é meio gambiarra é genial. Vamos preparar um falso header PPM e isso já calcula o offset pra gente (se não fizesse desse jeito ia ter que
 		// repetir tudo que tem no `prepararPPM` de qualquer jeito).
 		char str[3 + 50 + 1 + 50 + 1 + 3 + 1];	// 3 do número mágico, 50 para a largura e altura, com 1 espaço no meio e '\n' depois e 3 para a profundidade (1 a 255) com 1 nova linha depois.
 		// Número mágico é 3 linhas, incluindo o '\n', os +1 são divisórias obrigatórias, com elas podendo ser ' ' ou '\n', 50 de máximo de número de caracteres é por que sim ...
 		// eu coloquei como máximo de 50 caracteres no meu `parseHeader` e a profundidade vai de 1 caractere a 3 (1-255), não pode menos ou mais.
 		// Teóricamente pode passar de 255, mas mesmo assim não vai chegar a 4 dígitos. O único problema seria que acima de 255 cada parte da tupla é 2 bytes, algo que não verificamos.
 
-		// TODO: Verificar se o tamanho está certo agora, por que tem uma nova linha depois de cada linha de pixeis da altura.
-		// Tamanho não tá certo kkk
 		arquivoFinal = (char*)malloc(menorHeader.largura * menorHeader.altura * 3 + prepararPPM(str, &menorHeader));
 	}
 
@@ -363,20 +321,16 @@ int main()
 	{
 		for (int j = 0; j < menorHeader.largura; j++)
 		{
-			if (arquivo1[header1.offset + j * 3 + header1.largura * i * 3] == arquivo2[header2.offset + j * 3 + header2.largura * i * 3] &&
-				arquivo1[header1.offset + j * 3 + 1 + header1.largura * i * 3] == arquivo2[header2.offset + j * 3 + 1 + header2.largura * i * 3] &&
-				arquivo1[header1.offset + j * 3 + 2 + header1.largura * i * 3] == arquivo2[header2.offset + j * 3 + 2 + header2.largura * i * 3])
+			if (pixel(arquivo1, header1, 0) == pixel(arquivo2, header2, 0) &&
+				pixel(arquivo1, header1, 1) == pixel(arquivo2, header2, 1) &&
+				pixel(arquivo1, header1, 2) == pixel(arquivo2, header2, 2))
 			{
-				arquivoFinal[menorHeader.offset + j * 3 + menorHeader.largura * i * 3] = arquivo1[header1.offset + j * 3 + header1.largura * i * 3];
-				arquivoFinal[menorHeader.offset + j * 3 + 1 + menorHeader.largura * i * 3] = arquivo1[header1.offset + j * 3 + 1 + header1.largura * i * 3];
-				arquivoFinal[menorHeader.offset + j * 3 + 2 + menorHeader.largura * i * 3] = arquivo1[header1.offset + j * 3 + 2 + header1.largura * i * 3];
+				pixel(arquivoFinal, menorHeader, 0) = pixel(arquivo1, header1, 0);
+				pixel(arquivoFinal, menorHeader, 1) = pixel(arquivo1, header1, 1);
+				pixel(arquivoFinal, menorHeader, 2) = pixel(arquivo1, header1, 2);
 			}
 			else
 			{
-				//arquivoFinal[menorHeader.offset + j * 3 + menorHeader.largura * i * 3] = COR_ERRO_R;
-				//arquivoFinal[menorHeader.offset + j * 3 + 1 + menorHeader.largura * i * 3] = COR_ERRO_G;
-				//arquivoFinal[menorHeader.offset + j * 3 + 2 + menorHeader.largura * i * 3] = COR_ERRO_B;
-
 				pixel(arquivoFinal, menorHeader, 0) = COR_ERRO_R;
 				pixel(arquivoFinal, menorHeader, 1) = COR_ERRO_G;
 				pixel(arquivoFinal, menorHeader, 2) = COR_ERRO_B;
