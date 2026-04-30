@@ -51,15 +51,12 @@ P6\n
 */
 unsigned char parseHeader(char* arquivo, header* h)
 {
-	//char num[51] = {};	// Se o número tiver mais de 50 dígitos eu choro. Eu até coloquei o +1 pra garantir o '\0' :(
-	char num[51];
-	for (int i = 0; i < 51; i++)
-		num[i] = 0;
-	int i = 3;
+	char num[51] = {};	// Se o número tiver mais de 50 dígitos eu choro. Eu até coloquei o +1 pra garantir o '\0' :(
 
 	if (!(arquivo[0] == 'P' && arquivo[1] == '6' && (arquivo[2] == '\n' || arquivo[2] == ' ')))
 		return false;
 
+	int i = 3;
 	int numtokens = 0;
 	while (numtokens < 3)	// Largura, altura e profundidade
 	{
