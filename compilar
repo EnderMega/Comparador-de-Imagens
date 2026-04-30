@@ -1,1 +1,2 @@
-g++ main.cpp -o teste -fno-exceptions
+#g++ -static-libgcc -nostartfiles -nodefaultlibs -fno-builtin -fno-builtin-memset -mno-stack-arg-probe -fno-exceptions -fno-stack-protector -fno-asynchronous-unwind-tables -fno-unwind-tables main.cpp -o teste -e mmain -lc -lgcc -O3 $1
+g++ main.cpp -o teste $1

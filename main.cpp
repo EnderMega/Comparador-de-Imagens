@@ -51,7 +51,10 @@ P6\n
 */
 unsigned char parseHeader(char* arquivo, header* h)
 {
-	char num[51] = {};	// Se o número tiver mais de 50 dígitos eu choro. Eu até coloquei o +1 pra garantir o '\0' :(
+	//char num[51] = {};	// Se o número tiver mais de 50 dígitos eu choro. Eu até coloquei o +1 pra garantir o '\0' :(
+	char num[51];
+	for (int i = 0; i < 51; i++)
+		num[i] = 0;
 	int i = 3;
 
 	if (!(arquivo[0] == 'P' && arquivo[1] == '6' && (arquivo[2] == '\n' || arquivo[2] == ' ')))
@@ -83,13 +86,13 @@ unsigned char parseHeader(char* arquivo, header* h)
 
 			// Largura
 			if (numtokens == 0)
-				h->largura = atoi(num);
+				h->largura = matoi(num);
 			// Altura
 			else if (numtokens == 1)
-				h->altura = atoi(num);
+				h->altura = matoi(num);
 			// Profundidade
 			else
-				h->maxVal = atoi(num);
+				h->maxVal = matoi(num);
 
 			for (int aaa = 0; num[aaa] != 0; aaa++)
 				num[aaa] = 0;
@@ -137,7 +140,7 @@ int main()
 	copiar("fotos/perlica1.ppm", nome1);
 #else
 	write(1, "Primeira imagem (incluir extensão .ppm): ", 42);
-	read(2, nome1, 255);
+	read(0, nome1, 255);
 	for (int i = 0; i < 255; i++)
 		if (nome1[i] == '\n')
 		{
@@ -150,14 +153,14 @@ int main()
 	{
 		write(1, "Arquivo não encontrado.\n", 25);
 
-		return 1;
+		_exit(1);
 	}
 
 #ifdef TESTE
-	copiar("fotos/torto.ppm", nome2);
+	copiar("fotos/perlica2.ppm", nome2);
 #else
 	write(1, "Segunda imagem  (incluir extensão .ppm): ", 42);
-	read(2, nome2, 255);
+	read(0, nome2, 255);
 	for (int i = 0; i < 255; i++)
 		if (nome2[i] == '\n')
 		{
@@ -170,12 +173,12 @@ int main()
 	{
 		write(1, "Arquivo não encontrado.\n", 25);
 
-		return 2;
+		_exit(2);
 	}
 
 #ifdef NOMEFINAL
 	write(1, "Nome do arquivo final (incluir extensão .ppm): ", 48);
-	read(2, nomeFinal, 255);
+	read(0, nomeFinal, 255);
 	for (int i = 0; i < 255; i++)
 		if (nomeFinal[i] == '\n')
 		{
@@ -217,17 +220,17 @@ int main()
 		if (!primeiro && !segundo)
 		{
 			write(1, "Nem um dos dois arquivos possui o número mágico (P6) ou está corrompido.\n", 76);
-			return 3;
+			_exit(3);
 		}
 		else if (!primeiro)
 		{
 			write(1, "O primeiro arquivo não possui o número mágico (P6) ou está corrompido.\n", 75);
-			return 4;
+			_exit(4);
 		}
 		else if (!segundo)
 		{
 			write(1, "O segundo arquivo não possui o número mágico (P6) ou está corrompido.\n", 74);
-			return 5;
+			_exit(5);
 		}
 	}
 
@@ -280,7 +283,7 @@ int main()
 		write(1, "\n\e[1mAVISO!!!\e[22m\nO valor de profundidade dos arquivos é diferente.\n\e[3m[SAIR_DIFF_PROFUNDIDADE \e[1mNÃO\e[22m definido]\e[23m\n", 127);
 #else
 		write(1, "\n\e[1mERRO!!!\e[22m\nO valor de profundidade dos arquivos é diferente.\n\e[3m[SAIR_DIFF_PROFUNDIDADE definido]\e[23m\n\n", 113);
-		return 6;
+		_exit(6);
 #endif
 	}
 
@@ -342,7 +345,7 @@ int main()
 		write(1, "Os arquivos são diferentes.\n", 29);
 
 	int hArquivo3 = open(nomeFinal, O_CREAT | O_TRUNC | O_RDWR, 0644);
-	write(hArquivo3, arquivoFinal, menorHeader.offset + menorHeader.largura * menorHeader.altura * 3 + menorHeader.largura);
+	write(hArquivo3, arquivoFinal, menorHeader.offset + menorHeader.largura * menorHeader.altura * 3);
 
-	return 0;
+	_exit(0);
 }

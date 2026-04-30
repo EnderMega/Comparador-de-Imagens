@@ -1,5 +1,6 @@
 // Essa pega o tamanho de `origem` até o '\0' incluindo o '\0'
 // Retorna o número de bytes copiados
+#include <sys/types.h>
 int copiar(const char* origem, char* destino)
 {
 	int tam = 0;
@@ -21,6 +22,15 @@ void copiar(const char* origem, char* destino, int tam)
 	{
 		destino[i] = origem[i];
 	}
+}
+
+int matoi(const char* str) {
+    int result = 0;
+    while (*str >= '0' && *str <= '9') {
+        result = result * 10 + (*str - '0');
+        str++;
+    }
+    return result;
 }
 
 // Retorna a string
