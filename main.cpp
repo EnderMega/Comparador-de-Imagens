@@ -1,16 +1,15 @@
-#include <cstdlib>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/stat.h>
+#include <cstdlib>		// `malloc()`
+#include <unistd.h>		// `write()`, `read()`, `exit()`
+#include <fcntl.h>		// `open()` e macros para ele: O_RDWR, O_CREAT, O_TRUNC, O_RDONLY.
+#include <sys/stat.h>	// `fstat()`
 
 #include "extras.h"
 
-//#define NOMEFINAL
-// Nomes padrão para as entradas
-#define TESTE
-// #define TESTE2
-// Se deve terminar a execução caso os arquivo possuiam profundidades diferentes
-#define SAIR_DIFF_PROFUNDIDADE
+
+//#define NOMEFINAL				// Usar `final.ppm` para nome final em vez de pedir para o usuário.
+#define TESTE					// Nomes padrão para as entradas
+//#define TESTE2				// Imprime informações extras de debug
+#define SAIR_DIFF_PROFUNDIDADE	// Se deve terminar a execução caso os arquivo possuiam profundidades diferentes
 
 #define COR_ERRO_R 0xff
 #define COR_ERRO_G 0x00
@@ -25,8 +24,7 @@
 
 struct header {
 	int largura, altura, maxVal;
-	// `offset` se refere a quantos bytes do começo para o primeiro byte de dados
-	int offset;
+	int offset;	// Se refere a quantos bytes do começo para o primeiro byte de dados
 };
 
 /*
@@ -206,7 +204,7 @@ int main()
 		|_______|_______|
 		|       |
 		|       |
-		|_______|		Vamos apenas no importar com a parte com o 'x'.
+		|_______|		Vamos apenas nos importar com a parte com o 'x'.
 		Basicamente, a menor largura e menor altura.
 	*/
 

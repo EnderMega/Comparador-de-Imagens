@@ -1,6 +1,5 @@
 // Essa pega o tamanho de `origem` até o '\0' incluindo o '\0'
 // Retorna o número de bytes copiados
-#include <sys/types.h>
 int copiar(const char* origem, char* destino)
 {
 	int tam = 0;
