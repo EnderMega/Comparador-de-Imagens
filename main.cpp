@@ -7,7 +7,8 @@
 
 //#define NOMEFINAL
 // Nomes padrão para as entradas
-//#define TESTE
+#define TESTE
+// #define TESTE2
 // Se deve terminar a execução caso os arquivo possuiam profundidades diferentes
 #define SAIR_DIFF_PROFUNDIDADE
 
@@ -116,13 +117,13 @@ int prepararPPM(char* arquivo, header* h)
 	//      ^-+1-v
 	int offset = 3;
 
-	offset += itoa2(h->largura, arquivo + offset, 10);
+	offset += mitoa2(h->largura, arquivo + offset, 10);
 	arquivo[offset++] = ' ';
 
-	offset += itoa2(h->altura, arquivo + offset, 10);
+	offset += mitoa2(h->altura, arquivo + offset, 10);
 	arquivo[offset++] = '\n';
 
-	offset += itoa2(h->maxVal, arquivo + offset, 10);
+	offset += mitoa2(h->maxVal, arquivo + offset, 10);
 	arquivo[offset++] = '\n';
 
 	return offset;
@@ -146,7 +147,7 @@ int main()
 		}
 #endif
 	int hArquivo1;
-	if ((hArquivo1 = open(nome1, O_RDWR)) == -1)
+	if ((hArquivo1 = open(nome1, O_RDONLY)) == -1)
 	{
 		write(1, "Arquivo não encontrado.\n", 25);
 
@@ -166,7 +167,7 @@ int main()
 		}
 #endif
 	int hArquivo2;
-	if ((hArquivo2 = open(nome2, O_RDWR)) == -1)
+	if ((hArquivo2 = open(nome2, O_RDONLY)) == -1)
 	{
 		write(1, "Arquivo não encontrado.\n", 25);
 
@@ -231,7 +232,7 @@ int main()
 		}
 	}
 
-#ifdef TESTE
+#ifdef TESTE2
 	{
 		char temp[255] = {};
 
@@ -286,7 +287,7 @@ int main()
 
 	if (header1.largura != header2.largura || header1.altura != header2.altura)
 	{
-		write(1, "\e[1mAs imagens possuem tamanhos diferentes!\e[22m Serão analisadas a intersecção delas.\n", 90);
+		write(1, "\e[1mAs imagens possuem tamanhos diferentes!\e[22m Será analisado a intersecção delas.\n", 88);
 
 		menorHeader.largura = header1.largura < header2.largura ? header1.largura : header2.largura;
 		menorHeader.altura = header1.altura < header2.altura ? header1.altura : header2.altura;
@@ -315,6 +316,7 @@ int main()
 
 	bool diferentes = false;
 
+	rgb cores;
 	for (int i = 0; i < menorHeader.altura; i++)
 	{
 		for (int j = 0; j < menorHeader.largura; j++)
@@ -329,9 +331,14 @@ int main()
 			}
 			else
 			{
-				pixel(arquivoFinal, menorHeader, 0) = COR_ERRO_R;
-				pixel(arquivoFinal, menorHeader, 1) = COR_ERRO_G;
-				pixel(arquivoFinal, menorHeader, 2) = COR_ERRO_B;
+				// pixel(arquivoFinal, menorHeader, 0) = COR_ERRO_R;
+				// pixel(arquivoFinal, menorHeader, 1) = COR_ERRO_G;
+				// pixel(arquivoFinal, menorHeader, 2) = COR_ERRO_B;
+
+				cores = corFunc();
+				pixel(arquivoFinal, menorHeader, 0) = cores.r;
+				pixel(arquivoFinal, menorHeader, 1) = cores.g;
+				pixel(arquivoFinal, menorHeader, 2) = cores.b;
 
 				diferentes = true;
 			}
