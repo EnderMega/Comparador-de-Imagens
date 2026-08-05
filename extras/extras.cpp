@@ -23,7 +23,8 @@ void copiar(const char* origem, char* destino, int tam)
 	}
 }
 
-int matoi(const char* str) {
+int matoi(const char* str)
+{
     int result = 0;
     while (*str >= '0' && *str <= '9') {
         result = result * 10 + (*str - '0');
@@ -112,36 +113,4 @@ int mitoa2(int num, char* str, int base)
     }
 
     return i;
-}
-
-struct rgb {
-	char r, g, b;
-};
-
-rgb corFunc()
-{
-	static short r = 0;
-	static short g = 0;
-	static short b = 0;
-
-	r += 51;
-	if (r > 0xff)
-	{
-		r = 0;
-		g += 51;
-	}
-	if (g > 0xff)
-	{
-		g = 0;
-		b += 51;
-	}
-	if (b > 0xff)
-	{
-		b = 0;
-	}
-
-	rgb ret;
-	ret = { (char)r, (char)g, (char)b };
-
-	return ret;
 }

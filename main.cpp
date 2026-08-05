@@ -1,19 +1,17 @@
 #include <cstdlib>		// `malloc()`
-#include <unistd.h>		// `write()`, `read()`, `exit()`
+#include <unistd.h>		// `write()`, `read()`, `exit()`, `close()`
 #include <fcntl.h>		// `open()` e macros para ele: O_RDWR, O_CREAT, O_TRUNC, O_RDONLY.
 #include <sys/stat.h>	// `fstat()`
 
-#include "extras.h"
+#include <linux/limits.h>	// Macro PATH_MAX
+
+#include "extras/extras.h"
 
 
 //#define NOMEFINAL				// Usar `final.ppm` para nome final em vez de pedir para o usuário.
-#define TESTE					// Nomes padrão para as entradas
-//#define TESTE2				// Imprime informações extras de debug
+//#define TESTE					// Nomes padrão para as entradas
+//#define TESTE_LOG				// Imprime informações extras de debug
 #define SAIR_DIFF_PROFUNDIDADE	// Se deve terminar a execução caso os arquivo possuiam profundidades diferentes
-
-#define COR_ERRO_R 0xff
-#define COR_ERRO_G 0x00
-#define COR_ERRO_B 0x00
 
 #define print(s) write(1, s, sizeof(s) - 1)
 #define enumero(s) s > 47 && s < 58 
@@ -127,17 +125,41 @@ int prepararPPM(char* arquivo, header* h)
 	return offset;
 }
 
+struct rgb {
+	unsigned char r, g, b;
+} cor_erro;
+
 int main()
 {
-	char nome1[256];	// Não precisamos inicializar
-	char nome2[256];
-	char nomeFinal[256];
+	// TODO: Argumentos
+	int fd = open("/proc/self/cmdline", O_RDONLY);
+	if (fd != -1)
+	{
+		// Tamanho do arquivo que é sempre o primeiro argumento, +2 para caso `./` a partir do console.
+		// char temp[2 + PATH_MAX + tam_argumento1 + ... + quant + 1] = {};
+		char temp[PATH_MAX * 5] = {};	// XXX: Temp
+
+		read(fd, temp, 500);
+		close(fd);
+
+		short argsOffset = 0;
+		for (; temp[argsOffset] != 0; argsOffset++)
+			temp[argsOffset] = 0;
+
+		// . . .
+	}
+	else
+		print("Erro ao ler argumentos, continuando sem eles.\n");
+
+	char nome1[PATH_MAX];	// Não precisamos inicializar
+	char nome2[PATH_MAX];
+	char nomeFinal[PATH_MAX];
 #ifdef TESTE
 	copiar("fotos/perlica1.ppm", nome1);
 #else
 	write(1, "Primeira imagem (incluir extensão .ppm): ", 42);
-	read(0, nome1, 255);
-	for (int i = 0; i < 255; i++)
+	read(0, nome1, PATH_MAX - 1);
+	for (int i = 0; i < PATH_MAX - 1; i++)
 		if (nome1[i] == '\n')
 		{
 			nome1[i] = 0;
@@ -156,8 +178,8 @@ int main()
 	copiar("fotos/perlica2.ppm", nome2);
 #else
 	write(1, "Segunda imagem  (incluir extensão .ppm): ", 42);
-	read(0, nome2, 255);
-	for (int i = 0; i < 255; i++)
+	read(0, nome2, PATH_MAX - 1);
+	for (int i = 0; i < PATH_MAX - 1; i++)
 		if (nome2[i] == '\n')
 		{
 			nome2[i] = 0;
@@ -230,43 +252,43 @@ int main()
 		}
 	}
 
-#ifdef TESTE2
+#ifdef TESTE_LOG
 	{
 		char temp[255] = {};
 
 		write(1, "Largura 1: ", 11);
-		write(1, itoa(header1.largura, temp, 10), 255);
+		write(1, mitoa(header1.largura, temp, 10), 255);
 		for (int i = 0; i < 255; i++)
 			temp[i] = 0;
 		write(1, "\nAltura 1: ", 11);
-		write(1, itoa(header1.altura, temp, 10), 255);
+		write(1, mitoa(header1.altura, temp, 10), 255);
 		for (int i = 0; i < 255; i++)
 			temp[i] = 0;
 		write(1, "\nProfundidade 1: ", 17);
-		write(1, itoa(header1.maxVal, temp, 10), 255);
+		write(1, mitoa(header1.maxVal, temp, 10), 255);
 		for (int i = 0; i < 255; i++)
 			temp[i] = 0;
 		write(1, "\nOffset 1: ", 11);
-		write(1, itoa(header1.offset, temp, 10), 255);
+		write(1, mitoa(header1.offset, temp, 10), 255);
 		for (int i = 0; i < 255; i++)
 			temp[i] = 0;
 
 		/*********************************************/
 
 		write(1, "\nLargura 2: ", 12);
-		write(1, itoa(header2.largura, temp, 10), 255);
+		write(1, mitoa(header2.largura, temp, 10), 255);
 		for (int i = 0; i < 255; i++)
 			temp[i] = 0;
 		write(1, "\nAltura 2: ", 11);
-		write(1, itoa(header2.altura, temp, 10), 255);
+		write(1, mitoa(header2.altura, temp, 10), 255);
 		for (int i = 0; i < 255; i++)
 			temp[i] = 0;
 		write(1, "\nProfundidade 2: ", 17);
-		write(1, itoa(header2.maxVal, temp, 10), 255);
+		write(1, mitoa(header2.maxVal, temp, 10), 255);
 		for (int i = 0; i < 255; i++)
 			temp[i] = 0;
 		write(1, "\nOffset 2: ", 11);
-		write(1, itoa(header2.offset, temp, 10), 255);
+		write(1, mitoa(header2.offset, temp, 10), 255);
 		for (int i = 0; i < 255; i++)
 			temp[i] = 0;
 		write(1, "\n", 1);
@@ -296,7 +318,7 @@ int main()
 		menorHeader.altura = header1.altura;
 	}
 	menorHeader.maxVal = header1.maxVal;	// Para o arquivo final nós vamos sempre copiar do primeiro arquivo menos quando é diferente.
-										// Em geral isso significa que não faz diferença de qual a gente copia, como o primeiro arquivo é a referência vamos copiar o seu maxVal.
+											// Em geral não faz diferença de qual a gente copia; como o primeiro arquivo é a referência vamos copiar o seu maxVal.
 
 	char* arquivoFinal;
 	{
@@ -314,7 +336,6 @@ int main()
 
 	bool diferentes = false;
 
-	rgb cores;
 	for (int i = 0; i < menorHeader.altura; i++)
 	{
 		for (int j = 0; j < menorHeader.largura; j++)
@@ -329,14 +350,16 @@ int main()
 			}
 			else
 			{
-				// pixel(arquivoFinal, menorHeader, 0) = COR_ERRO_R;
-				// pixel(arquivoFinal, menorHeader, 1) = COR_ERRO_G;
-				// pixel(arquivoFinal, menorHeader, 2) = COR_ERRO_B;
+				pixel(arquivoFinal, menorHeader, 0) = cor_erro.r;
+				pixel(arquivoFinal, menorHeader, 1) = cor_erro.g;
+				pixel(arquivoFinal, menorHeader, 2) = cor_erro.b;
 
+				/*
 				cores = corFunc();
 				pixel(arquivoFinal, menorHeader, 0) = cores.r;
 				pixel(arquivoFinal, menorHeader, 1) = cores.g;
 				pixel(arquivoFinal, menorHeader, 2) = cores.b;
+				*/
 
 				diferentes = true;
 			}
