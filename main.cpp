@@ -1,7 +1,7 @@
-#include <cstdlib>		// `malloc()`
-#include <unistd.h>		// `write()`, `read()`, `exit()`, `close()`
-#include <fcntl.h>		// `open()` e macros para ele: O_RDWR, O_CREAT, O_TRUNC, O_RDONLY.
-#include <sys/stat.h>	// `fstat()`
+#include <cstdlib>			// `malloc()`
+#include <unistd.h>			// `write()`, `read()`, `exit()`, `close()`
+#include <fcntl.h>			// `open()` e macros para ele: O_RDWR, O_CREAT, O_TRUNC, O_RDONLY.
+#include <sys/stat.h>		// `fstat()`
 
 #include <linux/limits.h>	// Macro PATH_MAX
 
@@ -10,7 +10,7 @@
 
 //#define NOMEFINAL				// Usar `final.ppm` para nome final em vez de pedir para o usuário.
 //#define TESTE					// Nomes padrão para as entradas
-//#define TESTE_LOG				// Imprime informações extras de debug
+#define TESTE_LOG				// Imprime informações extras de debug
 #define SAIR_DIFF_PROFUNDIDADE	// Se deve terminar a execução caso os arquivo possuiam profundidades diferentes
 
 #define print(s) write(1, s, sizeof(s) - 1)
@@ -139,14 +139,24 @@ int main()
 		// char temp[2 + PATH_MAX + tam_argumento1 + ... + quant + 1] = {};
 		char temp[PATH_MAX * 5] = {};	// XXX: Temp
 
-		read(fd, temp, 500);
+		int tam = 0;
+		int lidos;
+		do {
+			lidos = read(fd, temp, 100);
+			tam += lidos;
+		} while(lidos >= 100);
 		close(fd);
 
-		short argsOffset = 0;
-		for (; temp[argsOffset] != 0; argsOffset++)
-			temp[argsOffset] = 0;
+		short nomeOffset = 0;
+		for (; temp[nomeOffset] != 0; nomeOffset++)
+			temp[nomeOffset] = 0;
 
 		// . . .
+		// for (int i = 0; ; )
+		// 	switch (condition)
+		// 	{
+		//
+		// 	}
 	}
 	else
 		print("Erro ao ler argumentos, continuando sem eles.\n");
@@ -157,7 +167,7 @@ int main()
 #ifdef TESTE
 	copiar("fotos/perlica1.ppm", nome1);
 #else
-	write(1, "Primeira imagem (incluir extensão .ppm): ", 42);
+	print("Primeira imagem (incluir extensão .ppm): ");
 	read(0, nome1, PATH_MAX - 1);
 	for (int i = 0; i < PATH_MAX - 1; i++)
 		if (nome1[i] == '\n')
@@ -169,15 +179,14 @@ int main()
 	int hArquivo1;
 	if ((hArquivo1 = open(nome1, O_RDONLY)) == -1)
 	{
-		write(1, "Arquivo não encontrado.\n", 25);
-
+		print("Arquivo não encontrado.\n");
 		_exit(1);
 	}
 
 #ifdef TESTE
 	copiar("fotos/perlica2.ppm", nome2);
 #else
-	write(1, "Segunda imagem  (incluir extensão .ppm): ", 42);
+	print("Segunda imagem  (incluir extensão .ppm): ");
 	read(0, nome2, PATH_MAX - 1);
 	for (int i = 0; i < PATH_MAX - 1; i++)
 		if (nome2[i] == '\n')
@@ -189,13 +198,12 @@ int main()
 	int hArquivo2;
 	if ((hArquivo2 = open(nome2, O_RDONLY)) == -1)
 	{
-		write(1, "Arquivo não encontrado.\n", 25);
-
+		print("Arquivo não encontrado.\n");
 		_exit(2);
 	}
 
 #ifdef NOMEFINAL
-	write(1, "Nome do arquivo final (incluir extensão .ppm): ", 48);
+	print("Nome do arquivo final (incluir extensão .ppm): ");
 	read(0, nomeFinal, 255);
 	for (int i = 0; i < 255; i++)
 		if (nomeFinal[i] == '\n')
@@ -237,17 +245,17 @@ int main()
 
 		if (!primeiro && !segundo)
 		{
-			write(1, "Nem um dos dois arquivos possui o número mágico (P6) ou está corrompido.\n", 76);
+			print("Nem um dos dois arquivos possui o número mágico (P6) ou está corrompido.\n");
 			_exit(3);
 		}
 		else if (!primeiro)
 		{
-			write(1, "O primeiro arquivo não possui o número mágico (P6) ou está corrompido.\n", 75);
+			print( "O primeiro arquivo não possui o número mágico (P6) ou está corrompido.\n");
 			_exit(4);
 		}
 		else if (!segundo)
 		{
-			write(1, "O segundo arquivo não possui o número mágico (P6) ou está corrompido.\n", 74);
+			print( "O segundo arquivo não possui o número mágico (P6) ou está corrompido.\n");
 			_exit(5);
 		}
 	}
@@ -256,58 +264,58 @@ int main()
 	{
 		char temp[255] = {};
 
-		write(1, "Largura 1: ", 11);
-		write(1, mitoa(header1.largura, temp, 10), 255);
+		print("Largura 1: ");
+		print(mitoa(header1.largura, temp, 10));
 		for (int i = 0; i < 255; i++)
 			temp[i] = 0;
-		write(1, "\nAltura 1: ", 11);
-		write(1, mitoa(header1.altura, temp, 10), 255);
+		print("\nAltura 1: ");
+		print(mitoa(header1.altura, temp, 10));
 		for (int i = 0; i < 255; i++)
 			temp[i] = 0;
-		write(1, "\nProfundidade 1: ", 17);
-		write(1, mitoa(header1.maxVal, temp, 10), 255);
+		print("\nProfundidade 1: ");
+		print(mitoa(header1.maxVal, temp, 10));
 		for (int i = 0; i < 255; i++)
 			temp[i] = 0;
-		write(1, "\nOffset 1: ", 11);
-		write(1, mitoa(header1.offset, temp, 10), 255);
+		print("\nOffset 1: ");
+		print(mitoa(header1.offset, temp, 10));
 		for (int i = 0; i < 255; i++)
 			temp[i] = 0;
 
 		/*********************************************/
 
-		write(1, "\nLargura 2: ", 12);
-		write(1, mitoa(header2.largura, temp, 10), 255);
+		print("\nLargura 2: ");
+		print(mitoa(header2.largura, temp, 10));
 		for (int i = 0; i < 255; i++)
 			temp[i] = 0;
-		write(1, "\nAltura 2: ", 11);
-		write(1, mitoa(header2.altura, temp, 10), 255);
+		print("\nAltura 2: ");
+		print(mitoa(header2.altura, temp, 10));
 		for (int i = 0; i < 255; i++)
 			temp[i] = 0;
-		write(1, "\nProfundidade 2: ", 17);
-		write(1, mitoa(header2.maxVal, temp, 10), 255);
+		print("\nProfundidade 2: ");
+		print(mitoa(header2.maxVal, temp, 10));
 		for (int i = 0; i < 255; i++)
 			temp[i] = 0;
-		write(1, "\nOffset 2: ", 11);
-		write(1, mitoa(header2.offset, temp, 10), 255);
+		print("\nOffset 2: ");
+		print(mitoa(header2.offset, temp, 10));
 		for (int i = 0; i < 255; i++)
 			temp[i] = 0;
-		write(1, "\n", 1);
+		print("\n");
 	}
 #endif
 	
 	if (header1.maxVal != header2.maxVal)
 	{
 #ifndef SAIR_DIFF_PROFUNDIDADE
-		write(1, "\n\e[1mAVISO!!!\e[22m\nO valor de profundidade dos arquivos é diferente.\n\e[3m[SAIR_DIFF_PROFUNDIDADE \e[1mNÃO\e[22m definido]\e[23m\n", 127);
+		print(1, "\n\e[1mAVISO!!!\e[22m\nO valor de profundidade dos arquivos é diferente.\n\e[3m[SAIR_DIFF_PROFUNDIDADE \e[1mNÃO\e[22m definido]\e[23m\n", 127);
 #else
-		write(1, "\n\e[1mERRO!!!\e[22m\nO valor de profundidade dos arquivos é diferente.\n\e[3m[SAIR_DIFF_PROFUNDIDADE definido]\e[23m\n\n", 113);
+		print("\n\e[1mERRO!!!\e[22m\nO valor de profundidade dos arquivos é diferente.\n\e[3m[SAIR_DIFF_PROFUNDIDADE definido]\e[23m\n\n");
 		_exit(6);
 #endif
 	}
 
 	if (header1.largura != header2.largura || header1.altura != header2.altura)
 	{
-		write(1, "\e[1mAs imagens possuem tamanhos diferentes!\e[22m Será analisado a intersecção delas.\n", 88);
+		print("\e[1mAs imagens possuem tamanhos diferentes!\e[22m Será analisado a intersecção delas.\n");
 
 		menorHeader.largura = header1.largura < header2.largura ? header1.largura : header2.largura;
 		menorHeader.altura = header1.altura < header2.altura ? header1.altura : header2.altura;
@@ -367,7 +375,7 @@ int main()
 	}
 
 	if (diferentes)
-		write(1, "Os arquivos são diferentes.\n", 29);
+		print("Os arquivos são diferentes.\n");
 
 	int hArquivo3 = open(nomeFinal, O_CREAT | O_TRUNC | O_RDWR, 0644);
 	write(hArquivo3, arquivoFinal, menorHeader.offset + menorHeader.largura * menorHeader.altura * 3);
