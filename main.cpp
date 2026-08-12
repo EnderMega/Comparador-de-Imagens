@@ -352,15 +352,27 @@ int main()
 				pixel(arquivo1, header1, 1) == pixel(arquivo2, header2, 1) &&
 				pixel(arquivo1, header1, 2) == pixel(arquivo2, header2, 2))
 			{
+#ifdef COPIAR
 				pixel(arquivoFinal, menorHeader, 0) = pixel(arquivo1, header1, 0);
 				pixel(arquivoFinal, menorHeader, 1) = pixel(arquivo1, header1, 1);
 				pixel(arquivoFinal, menorHeader, 2) = pixel(arquivo1, header1, 2);
+#else
+				pixel(arquivoFinal, menorHeader, 0) = (char)255;
+				pixel(arquivoFinal, menorHeader, 1) = (char)255;
+				pixel(arquivoFinal, menorHeader, 2) = (char)255;
+#endif
 			}
 			else
 			{
+#ifdef COPIAR
 				pixel(arquivoFinal, menorHeader, 0) = cor_erro.r;
 				pixel(arquivoFinal, menorHeader, 1) = cor_erro.g;
 				pixel(arquivoFinal, menorHeader, 2) = cor_erro.b;
+#else
+				pixel(arquivoFinal, menorHeader, 0) = (char)0;
+				pixel(arquivoFinal, menorHeader, 1) = (char)0;
+				pixel(arquivoFinal, menorHeader, 2) = (char)0;
+#endif
 
 				/*
 				cores = corFunc();
