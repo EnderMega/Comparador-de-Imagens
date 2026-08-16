@@ -8,10 +8,7 @@
 #include "extras/extras.h"
 
 
-//#define NOMEFINAL				// Usar `final.ppm` para nome final em vez de pedir para o usuário.
-//#define TESTE					// Nomes padrão para as entradas
-#define TESTE_LOG				// Imprime informações extras de debug
-#define SAIR_DIFF_PROFUNDIDADE	// Se deve terminar a execução caso os arquivo possuiam profundidades diferentes
+//#define TESTE_LOG				// Imprime informações extras de debug
 
 #define print(s) write(1, s, sizeof(s) - 1)
 #define enumero(s) s > 47 && s < 58 
@@ -104,7 +101,7 @@ unsigned char parseHeader(char* arquivo, header* h)
 	return true;
 }
 
-int prepararPPM(char* arquivo, header* h)
+int prepararPPM(unsigned char* arquivo, header* h)
 {
 	// Número mágico
 	arquivo[0] = 'P';
@@ -113,13 +110,13 @@ int prepararPPM(char* arquivo, header* h)
 	//      ^-+1-v
 	int offset = 3;
 
-	offset += mitoa2(h->largura, arquivo + offset, 10);
+	offset += mitoa2(h->largura, (char*)(arquivo + offset), 10);
 	arquivo[offset++] = ' ';
 
-	offset += mitoa2(h->altura, arquivo + offset, 10);
+	offset += mitoa2(h->altura, (char*)(arquivo + offset), 10);
 	arquivo[offset++] = '\n';
 
-	offset += mitoa2(h->maxVal, arquivo + offset, 10);
+	offset += mitoa2(h->maxVal, (char*)(arquivo + offset), 10);
 	arquivo[offset++] = '\n';
 
 	return offset;
@@ -127,36 +124,89 @@ int prepararPPM(char* arquivo, header* h)
 
 struct rgb {
 	unsigned char r, g, b;
-} cor_erro;
+} cor_diferenca = { 255, 0, 0 };
+
+rgb cor_semelhanca = { 0, 0, 0 };
+rgb cor_tolerancia = { 0, 0, 0 };
 
 int main()
 {
-	// TODO: Argumentos
+	bool cor_usuario = false;
+	bool semelhanca_usuario = false;
+	bool nomeFinalUsuario = false;
+	bool repetir = true;
+	bool profundidadeSair = true;
+
 	int fd = open("/proc/self/cmdline", O_RDONLY);
 	if (fd != -1)
 	{
-		// Tamanho do arquivo que é sempre o primeiro argumento, +2 para caso `./` a partir do console.
-		// char temp[2 + PATH_MAX + tam_argumento1 + ... + quant + 1] = {};
-		char temp[PATH_MAX * 5] = {};	// XXX: Temp
+		// Nome executável + 2 para `./`. x argumentos, x espaços, 3 cores que podems ser 3 dígitos para 'c' (cores), 1 para '\0'.
+		char argumentos[2 + PATH_MAX + 4 + 4
+			+ 3 * 3 + 3
+			+ 1 + PATH_MAX + 1] = {};
+		// WARNING: Talvez não esteja certo a exata quantidade de espaços entre os argumentos, mas isso é de menos.
 
 		int tam = 0;
 		int lidos;
 		do {
-			lidos = read(fd, temp, 100);
+			lidos = read(fd, argumentos, 100);
 			tam += lidos;
 		} while(lidos >= 100);
 		close(fd);
 
 		short nomeOffset = 0;
-		for (; temp[nomeOffset] != 0; nomeOffset++)
-			temp[nomeOffset] = 0;
+		for (; argumentos[nomeOffset] != 0; nomeOffset++)
+			argumentos[nomeOffset] = 0;
 
 		// . . .
-		// for (int i = 0; ; )
-		// 	switch (condition)
-		// 	{
-		//
-		// 	}
+		for (int i = nomeOffset; i < tam; i++)
+		{
+			if (argumentos[i] == 'h')	// Ajuda
+			{
+				print("Ajuda:\n\
+Não é necessário traços para os argumentos.\
+\n> \e[3mh\e[23m (Ajuda|Help) Mostra esta tela de ajuda.\
+\n> \e[3mc=r,g,b\e[23m: (Cor) Define a cor que vai ser utilizada para mostrar o que tem de diferente no modo normal e o que tem de igual no modo de semelhança. \
+Com \e[3m`r`\e[23m, \e[3m`g`\e[23m, \e[3m`b`\e[23m, sendo as cores \e[1;31mvermelho\e[0m, \e[1;32mverde\e[0m, \e[1;34mazul\e[0m, respectivamente, sem digitar os `. (Nota: Não tem que necessariamente seguir o esquema de '=' e ',', pode apenas espaçar os sub-argumetos, porém faz mais sentido assim)\
+\n> \e[3ms\e[23m: (Semelhança) Em vez de comparar que as duas imagens possuem de diferente compara o que elas possuem de igual.\
+\n> \e[3mn\e[23m: (Nome) Se o programa deve pedir o nome final/de saída para o arquivo.\
+\n> \e[3mt=r,g,b\e[23m | \e[3mt=+~\e[23m: (Tolerancia) O quão diferente pode ser as cores antes de considera-las como diferente. \
+Pode ser utilizado passando 3 valores, que são as diferença para os valores rgb individualmente ou pode ser passado `\e[3m+~\e[23m` para a soma das diferenças. (Nota: Não tem que necessariamente seguir o esquema de '=' e ',', pode apenas espaçar os sub-argumetos, porém faz mais sentido assim)\
+\n> \e[3mr\e[23m: (\e[1m*Repetir\e[22m) \e[1mNão\e[22m repetir pedir nome ao não encontrar arquivo.. (Pode ser útil se se esse programa for chamado por outro já que o programa não vai digitar errado).\
+\n> \e[3mp\e[23m: (\e[1m*Profundidade\e[22m) Não sair se a profundidade de bits dos arquivos são diferentes (Nota: Isso pode gerar erros ao analisar as imagens).\n");
+				_exit(0);
+			}
+			else if (argumentos[i] == 'c') // Cor
+			{
+				for (int num = 0; num < 3; num++)
+				{
+					while (!(argumentos[i] >= '0' && argumentos[i] <= '9')) i++;
+					*(((unsigned char*)&cor_diferenca) + (num * sizeof(unsigned char))) = matoi(argumentos + i);	// Isso é muito gambiarra, mas funciona.
+					while (argumentos[i] >= '0' && argumentos[i] <= '9') i++;
+
+					cor_semelhanca = cor_diferenca;
+				}
+			}
+			else if (argumentos[i] == 's')	// Semelhança
+				semelhanca_usuario = true;
+			else if (argumentos[i] == 'n')	// Nome
+				nomeFinalUsuario = true;
+			else if (argumentos[i] == 't')	// Tolerancia
+			{
+				while (!(argumentos[i] >= '0' && argumentos[i] <= '9' || argumentos[i] == '+')) i++;
+
+				for (int num = 0; num < 3; num++)
+				{
+					while (!(argumentos[i] >= '0' && argumentos[i] <= '9')) i++;
+					*(((unsigned char*)&cor_diferenca) + (num * sizeof(unsigned char))) = matoi(argumentos + i);	// Isso é muito gambiarra, mas funciona.
+					while (argumentos[i] >= '0' && argumentos[i] <= '9') i++;
+				}
+			}
+			else if (argumentos[i] == 'r')	// *Não* repetir
+				repetir = false;
+			else if (argumentos[i] == 'p')	// Não sair caso profundidade diferente
+				profundidadeSair = false;
+		}
 	}
 	else
 		print("Erro ao ler argumentos, continuando sem eles.\n");
@@ -164,9 +214,10 @@ int main()
 	char nome1[PATH_MAX];	// Não precisamos inicializar
 	char nome2[PATH_MAX];
 	char nomeFinal[PATH_MAX];
-#ifdef TESTE
-	copiar("fotos/perlica1.ppm", nome1);
-#else
+	
+	
+	int hArquivo1;
+repetir1:
 	print("Primeira imagem (incluir extensão .ppm): ");
 	read(0, nome1, PATH_MAX - 1);
 	for (int i = 0; i < PATH_MAX - 1; i++)
@@ -175,17 +226,17 @@ int main()
 			nome1[i] = 0;
 			break;
 		}
-#endif
-	int hArquivo1;
 	if ((hArquivo1 = open(nome1, O_RDONLY)) == -1)
 	{
 		print("Arquivo não encontrado.\n");
-		_exit(1);
+		if (repetir)
+			goto repetir1;	// ""goto considered harmfull" considered harmfull"
+		else
+			_exit(1);
 	}
 
-#ifdef TESTE
-	copiar("fotos/perlica2.ppm", nome2);
-#else
+	int hArquivo2;
+repetir2:
 	print("Segunda imagem  (incluir extensão .ppm): ");
 	read(0, nome2, PATH_MAX - 1);
 	for (int i = 0; i < PATH_MAX - 1; i++)
@@ -194,26 +245,14 @@ int main()
 			nome2[i] = 0;
 			break;
 		}
-#endif
-	int hArquivo2;
 	if ((hArquivo2 = open(nome2, O_RDONLY)) == -1)
 	{
 		print("Arquivo não encontrado.\n");
-		_exit(2);
+		if (repetir)
+			goto repetir2;	// ""goto considered harmfull" considered harmfull"
+		else
+			_exit(2);
 	}
-
-#ifdef NOMEFINAL
-	print("Nome do arquivo final (incluir extensão .ppm): ");
-	read(0, nomeFinal, 255);
-	for (int i = 0; i < 255; i++)
-		if (nomeFinal[i] == '\n')
-		{
-			nomeFinal[i] = 0;
-			break;
-		}
-#else
-	copiar("final.ppm", nomeFinal);
-#endif
 	
 	struct stat tam1;
 	struct stat tam2;
@@ -262,55 +301,56 @@ int main()
 
 #ifdef TESTE_LOG
 	{
-		char temp[255] = {};
+		char tempLog[255] = {};
 
 		print("Largura 1: ");
-		print(mitoa(header1.largura, temp, 10));
+		print(mitoa(header1.largura, tempLog, 10));
 		for (int i = 0; i < 255; i++)
-			temp[i] = 0;
+			tempLog[i] = 0;
 		print("\nAltura 1: ");
-		print(mitoa(header1.altura, temp, 10));
+		print(mitoa(header1.altura, tempLog, 10));
 		for (int i = 0; i < 255; i++)
-			temp[i] = 0;
+			tempLog[i] = 0;
 		print("\nProfundidade 1: ");
-		print(mitoa(header1.maxVal, temp, 10));
+		print(mitoa(header1.maxVal, tempLog, 10));
 		for (int i = 0; i < 255; i++)
-			temp[i] = 0;
+			tempLog[i] = 0;
 		print("\nOffset 1: ");
-		print(mitoa(header1.offset, temp, 10));
+		print(mitoa(header1.offset, tempLog, 10));
 		for (int i = 0; i < 255; i++)
-			temp[i] = 0;
+			tempLog[i] = 0;
 
 		/*********************************************/
 
 		print("\nLargura 2: ");
-		print(mitoa(header2.largura, temp, 10));
+		print(mitoa(header2.largura, tempLog, 10));
 		for (int i = 0; i < 255; i++)
-			temp[i] = 0;
+			tempLog[i] = 0;
 		print("\nAltura 2: ");
-		print(mitoa(header2.altura, temp, 10));
+		print(mitoa(header2.altura, tempLog, 10));
 		for (int i = 0; i < 255; i++)
-			temp[i] = 0;
+			tempLog[i] = 0;
 		print("\nProfundidade 2: ");
-		print(mitoa(header2.maxVal, temp, 10));
+		print(mitoa(header2.maxVal, tempLog, 10));
 		for (int i = 0; i < 255; i++)
-			temp[i] = 0;
+			tempLog[i] = 0;
 		print("\nOffset 2: ");
-		print(mitoa(header2.offset, temp, 10));
+		print(mitoa(header2.offset, tempLog, 10));
 		for (int i = 0; i < 255; i++)
-			temp[i] = 0;
+			tempLog[i] = 0;
 		print("\n");
 	}
 #endif
 	
 	if (header1.maxVal != header2.maxVal)
 	{
-#ifndef SAIR_DIFF_PROFUNDIDADE
-		print(1, "\n\e[1mAVISO!!!\e[22m\nO valor de profundidade dos arquivos é diferente.\n\e[3m[SAIR_DIFF_PROFUNDIDADE \e[1mNÃO\e[22m definido]\e[23m\n", 127);
-#else
-		print("\n\e[1mERRO!!!\e[22m\nO valor de profundidade dos arquivos é diferente.\n\e[3m[SAIR_DIFF_PROFUNDIDADE definido]\e[23m\n\n");
-		_exit(6);
-#endif
+		if (profundidadeSair)
+		{
+			print("\n\e[1mERRO!!!\e[22m\nO valor de profundidade dos arquivos é diferente.\n");
+			_exit(6);
+		}
+		else
+			print("\n\e[1mAVISO!!!\e[22m\nO valor de profundidade dos arquivos é diferente.\n");
 	}
 
 	if (header1.largura != header2.largura || header1.altura != header2.altura)
@@ -328,16 +368,16 @@ int main()
 	menorHeader.maxVal = header1.maxVal;	// Para o arquivo final nós vamos sempre copiar do primeiro arquivo menos quando é diferente.
 											// Em geral não faz diferença de qual a gente copia; como o primeiro arquivo é a referência vamos copiar o seu maxVal.
 
-	char* arquivoFinal;
+	unsigned char* arquivoFinal;
 	{
 		//   Ao mesmo tempo que é meio gambiarra é genial. Vamos preparar um falso header PPM e isso já calcula o offset pra gente (se não fizesse desse jeito ia ter que
 		// repetir tudo que tem no `prepararPPM` de qualquer jeito).
-		char str[3 + 50 + 1 + 50 + 1 + 3 + 1];	// 3 do número mágico, 50 para a largura e altura, com 1 espaço no meio e '\n' depois e 3 para a profundidade (1 a 255) com 1 nova linha depois.
+		unsigned char str[3 + 50 + 1 + 50 + 1 + 3 + 1];	// 3 do número mágico, 50 para a largura e altura, com 1 espaço no meio e '\n' depois e 3 para a profundidade (1 a 255) com 1 nova linha depois.
 		// Número mágico é 3 linhas, incluindo o '\n', os +1 são divisórias obrigatórias, com elas podendo ser ' ' ou '\n', 50 de máximo de número de caracteres é por que sim ...
 		// eu coloquei como máximo de 50 caracteres no meu `parseHeader` e a profundidade vai de 1 caractere a 3 (1-255), não pode menos ou mais.
 		// Teóricamente pode passar de 255, mas mesmo assim não vai chegar a 4 dígitos. O único problema seria que acima de 255 cada parte da tupla é 2 bytes, algo que não verificamos.
 
-		arquivoFinal = (char*)malloc(menorHeader.largura * menorHeader.altura * 3 + prepararPPM(str, &menorHeader));
+		arquivoFinal = (unsigned char*)malloc(menorHeader.largura * menorHeader.altura * 3 + prepararPPM(str, &menorHeader));
 	}
 
 	menorHeader.offset = prepararPPM(arquivoFinal, &menorHeader);	// ... é meio gambiarra sim.
@@ -352,33 +392,39 @@ int main()
 				pixel(arquivo1, header1, 1) == pixel(arquivo2, header2, 1) &&
 				pixel(arquivo1, header1, 2) == pixel(arquivo2, header2, 2))
 			{
-#ifdef COPIAR
-				pixel(arquivoFinal, menorHeader, 0) = pixel(arquivo1, header1, 0);
-				pixel(arquivoFinal, menorHeader, 1) = pixel(arquivo1, header1, 1);
-				pixel(arquivoFinal, menorHeader, 2) = pixel(arquivo1, header1, 2);
-#else
-				pixel(arquivoFinal, menorHeader, 0) = (char)255;
-				pixel(arquivoFinal, menorHeader, 1) = (char)255;
-				pixel(arquivoFinal, menorHeader, 2) = (char)255;
-#endif
+				if (semelhanca_usuario)
+				{
+					pixel(arquivoFinal, menorHeader, 0) = 255;
+					pixel(arquivoFinal, menorHeader, 1) = 255;
+					pixel(arquivoFinal, menorHeader, 2) = 255;
+				}
+				else
+				{
+					pixel(arquivoFinal, menorHeader, 0) = pixel(arquivo1, header1, 0);
+					pixel(arquivoFinal, menorHeader, 1) = pixel(arquivo1, header1, 1);
+					pixel(arquivoFinal, menorHeader, 2) = pixel(arquivo1, header1, 2);
+				}
 			}
 			else
 			{
-#ifdef COPIAR
+				if (semelhanca_usuario)
+				{
+					pixel(arquivoFinal, menorHeader, 0) = cor_semelhanca.r;
+					pixel(arquivoFinal, menorHeader, 1) = cor_semelhanca.g;
+					pixel(arquivoFinal, menorHeader, 2) = cor_semelhanca.b;
+				}
+				else
+				{
+					pixel(arquivoFinal, menorHeader, 0) = cor_diferenca.r;
+					pixel(arquivoFinal, menorHeader, 1) = cor_diferenca.g;
+					pixel(arquivoFinal, menorHeader, 2) = cor_diferenca.b;
+				}
+
+				/*
+				cor_diferenca = corFunc();
 				pixel(arquivoFinal, menorHeader, 0) = cor_erro.r;
 				pixel(arquivoFinal, menorHeader, 1) = cor_erro.g;
 				pixel(arquivoFinal, menorHeader, 2) = cor_erro.b;
-#else
-				pixel(arquivoFinal, menorHeader, 0) = (char)0;
-				pixel(arquivoFinal, menorHeader, 1) = (char)0;
-				pixel(arquivoFinal, menorHeader, 2) = (char)0;
-#endif
-
-				/*
-				cores = corFunc();
-				pixel(arquivoFinal, menorHeader, 0) = cores.r;
-				pixel(arquivoFinal, menorHeader, 1) = cores.g;
-				pixel(arquivoFinal, menorHeader, 2) = cores.b;
 				*/
 
 				diferentes = true;
@@ -389,6 +435,20 @@ int main()
 	if (diferentes)
 		print("Os arquivos são diferentes.\n");
 
+	if (nomeFinalUsuario)
+	{
+		print("Digite o nome para o arquivo final (Ctrl+c caso não deseje salvar o arquivo): ");
+		read(0, nomeFinal, PATH_MAX - 1);
+		for (int i = 0; i < PATH_MAX - 1; i++)
+			if (nomeFinal[i] == '\n')
+			{
+				nomeFinal[i] = 0;
+				break;
+			}
+	}
+	else
+		copiar("final.ppm", nomeFinal);
+	
 	int hArquivo3 = open(nomeFinal, O_CREAT | O_TRUNC | O_RDWR, 0644);
 	write(hArquivo3, arquivoFinal, menorHeader.offset + menorHeader.largura * menorHeader.altura * 3);
 
