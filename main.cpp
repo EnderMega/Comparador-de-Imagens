@@ -14,6 +14,11 @@
 #define enumero(s) s > 47 && s < 58 
 
 #define pixel(arquivo, header, extra) arquivo[header.offset + j * 3 + extra + header.largura * i * 3]
+// Só tenho esses macros para um lugar específico, o teste de pixeis, que fica horroros se tiver que fazer pixel(...) ou literal,
+//	tem um exemplo em cima (que foi utilizando expanção pelo editor de texto).
+#define p1(ARG_X) pixel(arquivo1, header1, ARG_X)
+#define p2(ARG_X) pixel(arquivo2, header2, ARG_X)
+#define pf(ARG_X) pixel(arquivoFinal, menorHeader, ARG_X)
 
 
 
@@ -43,7 +48,7 @@ P6\n
 # comentário
 255
 */
-unsigned char parseHeader(char* arquivo, header* h)
+unsigned char parseHeader(unsigned char* arquivo, header* h)
 {
 	char num[51] = {};	// Se o número tiver mais de 50 dígitos eu choro. Eu até coloquei o +1 pra garantir o '\0' :(
 
@@ -198,7 +203,7 @@ Pode ser utilizado passando 3 valores, que são as diferença para os valores rg
 				for (int num = 0; num < 3; num++)
 				{
 					while (!(argumentos[i] >= '0' && argumentos[i] <= '9')) i++;
-					*(((unsigned char*)&cor_diferenca) + (num * sizeof(unsigned char))) = matoi(argumentos + i);	// Isso é muito gambiarra, mas funciona.
+					*(((unsigned char*)&cor_tolerancia) + (num * sizeof(unsigned char))) = matoi(argumentos + i);	// Isso é muito gambiarra, mas funciona.
 					while (argumentos[i] >= '0' && argumentos[i] <= '9') i++;
 				}
 			}
@@ -259,8 +264,8 @@ repetir2:
 	fstat(hArquivo1, &tam1);
 	fstat(hArquivo2, &tam2);
 
-	char* arquivo1 = (char*)malloc(tam1.st_size);
-	char* arquivo2 = (char*)malloc(tam2.st_size);
+	unsigned char* arquivo1 = (unsigned char*)malloc(tam1.st_size);
+	unsigned char* arquivo2 = (unsigned char*)malloc(tam2.st_size);
 
 	read(hArquivo1, arquivo1, tam1.st_size);
 	read(hArquivo2, arquivo2, tam2.st_size);
@@ -388,6 +393,20 @@ repetir2:
 	{
 		for (int j = 0; j < menorHeader.largura; j++)
 		{
+			// inicial <= final - t && final + t <= inicial [Nesse caso final é o pixel 2]
+			// if ((arquivo1[header1.offset + j * 3 + 0 + header1.largura * i * 3] <= arquivo2[header2.offset + j * 3 + 0 + header2.largura * i * 3] - cor_tolerancia.r &&
+			// 	arquivo2[header2.offset + j * 3 + 0 + header2.largura * i * 3] + cor_tolerancia.r <= arquivo1[header1.offset + j * 3 + 0 + header1.largura * i * 3]) &&
+			// 	// - - -
+			// 	(arquivo1[header1.offset + j * 3 + 1 + header1.largura * i * 3] <= arquivo2[header2.offset + j * 3 + 1 + header2.largura * i * 3] - cor_tolerancia.g &&
+			// 	arquivo2[header2.offset + j * 3 + 1 + header2.largura * i * 3] + cor_tolerancia.g <= arquivo1[header1.offset + j * 3 + 1 + header1.largura * i * 3]) &&
+			// 	// - - -
+			// 	(arquivo1[header1.offset + j * 3 + 2 + header1.largura * i * 3] <= arquivo2[header2.offset + j * 3 + 2 + header2.largura * i * 3] - cor_tolerancia.b &&
+			// 	arquivo2[header2.offset + j * 3 + 2 + header2.largura * i * 3] + cor_tolerancia.b <= arquivo1[header1.offset + j * 3 + 2 + header1.largura * i * 3]))
+			
+			// if ((p1(0) <= p2(0) - cor_tolerancia.r && p2(0) + cor_tolerancia.r <= p1(0)) &&
+			// 	(p1(1) <= p2(1) - cor_tolerancia.g && p2(1) + cor_tolerancia.g <= p1(1)) &&
+			// 	(p1(2) <= p2(2) - cor_tolerancia.b && p2(2) + cor_tolerancia.b <= p1(2)) )
+			
 			if (pixel(arquivo1, header1, 0) == pixel(arquivo2, header2, 0) &&
 				pixel(arquivo1, header1, 1) == pixel(arquivo2, header2, 1) &&
 				pixel(arquivo1, header1, 2) == pixel(arquivo2, header2, 2))

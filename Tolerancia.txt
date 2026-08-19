@@ -1,0 +1,12 @@
+Se a tolerancia é 0, dá ma nesma que só pixel(...), se não, usa ela. Né idiota, dá pra usar colocar no mesmo bloco IF.
+
+Tolerancia é a comparação da diferença positiva e negativa do pixel final com o pixel inicial.
+
+0    5   10   15   20
+|....|....|....|....|
+     t....P....t
+          i
+
+final - t >= inicial && final + t <= inicial
+- - -
+inicial <= final - t && final + t <= inicial
