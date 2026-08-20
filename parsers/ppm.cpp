@@ -1,9 +1,7 @@
 #include "../extras/extras.h"
+#include "ppm.h"
 
-struct headerPPM {
-	int largura, altura, maxVal;
-	int offset;	// Se refere a quantos bytes do começo para o primeiro byte de dados
-};
+
 
 /*
 - Formato do cabeçalho:
@@ -26,7 +24,7 @@ P6\n
 # comentário
 255
 */
-unsigned char parseHeaderPPM(unsigned char* arquivo, headerPPM* h)
+bool parseHeaderPPM(unsigned char* arquivo, headerPPM* h)
 {
 	char num[51] = {};	// Se o número tiver mais de 50 dígitos eu choro. Eu até coloquei o +1 pra garantir o '\0' :(
 

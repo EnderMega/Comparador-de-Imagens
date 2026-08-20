@@ -6,6 +6,7 @@
 #include <linux/limits.h>	// Macro PATH_MAX
 
 #include "extras/extras.h"
+#include "parsers/ppm.h"
 
 
 //#define TESTE_LOG				// Imprime informações extras de debug
