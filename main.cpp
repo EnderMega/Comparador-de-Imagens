@@ -303,6 +303,7 @@ repetir2:
 			// if ((p1(0) <= p2(0) - cor_tolerancia.r && p2(0) + cor_tolerancia.r <= p1(0)) &&
 			// 	(p1(1) <= p2(1) - cor_tolerancia.g && p2(1) + cor_tolerancia.g <= p1(1)) &&
 			// 	(p1(2) <= p2(2) - cor_tolerancia.b && p2(2) + cor_tolerancia.b <= p1(2)) )
+			// Tolerancia
 			
 			if (pixel(arquivo1, header1, 0) == pixel(arquivo2, header2, 0) &&
 				pixel(arquivo1, header1, 1) == pixel(arquivo2, header2, 1) &&
