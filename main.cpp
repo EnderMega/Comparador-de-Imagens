@@ -5,7 +5,8 @@
 
 #include <linux/limits.h>	// Macro PATH_MAX
 
-#include "extras/extras.h"
+#include "utils/matematica.h"
+#include "utils/matriz.h"
 #include "parsers/ppm.h"
 
 
@@ -278,10 +279,10 @@ repetir2:
 		// eu coloquei como máximo de 50 caracteres no meu `parseHeader` e a profundidade vai de 1 caractere a 3 (1-255), não pode menos ou mais.
 		// Teóricamente pode passar de 255, mas mesmo assim não vai chegar a 4 dígitos. O único problema seria que acima de 255 cada parte da tupla é 2 bytes, algo que não verificamos.
 
-		arquivoFinal = (unsigned char*)malloc(menorHeader.largura * menorHeader.altura * 3 + prepararHeaderPPM(str, &menorHeader));
+		arquivoFinal = (unsigned char*)malloc(menorHeader.largura * menorHeader.altura * 3 + prepararHeaderPPM(str, menorHeader));
 	}
 
-	menorHeader.offset = prepararHeaderPPM(arquivoFinal, &menorHeader);	// ... é meio gambiarra sim.
+	menorHeader.offset = prepararHeaderPPM(arquivoFinal, menorHeader);	// ... é meio gambiarra sim.
 
 	bool diferentes = false;
 
