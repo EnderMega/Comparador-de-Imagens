@@ -4,6 +4,7 @@
 [ ] Avisar arguentos desconhecidos ou erros ao interpretar argumentos.
 
 [x] Ajuda
+[ ] Ajuda para argumentos específicos. Dá pra fazer o nosso parser/pegar do nosso outro programa.
 [x] Argumento para cor diferente
 [x] Semelhança
 [x] Nome final
