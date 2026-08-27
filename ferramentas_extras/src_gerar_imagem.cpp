@@ -55,7 +55,7 @@ int main()
 		imagem[header.offset + i + 2] = cor.b;
 	}
 	
-	int fd = open("Saida.ppm", O_CREAT | O_TRUNC | O_RDWR, 0644);
+	int fd = open("saidateste.ppm", O_CREAT | O_TRUNC | O_RDWR, 0644);
 	write(fd , imagem, header.offset + header.largura * header.altura);
 
 	_exit(0);
