@@ -66,16 +66,16 @@ int main()
 			if (argumentos[i] == 'h')	// Ajuda
 			{
 				print("Ajuda:\n\
-Não é necessário traços para os argumentos.\
-\n> \e[3mh\e[23m (Ajuda|Help) Mostra esta tela de ajuda.\
-\n> \e[3mc=r,g,b\e[23m: (Cor) Define a cor que vai ser utilizada para mostrar o que tem de diferente no modo normal e o que tem de igual no modo de semelhança. \
+Não é necessário traços para os argumentos nem separa-los (Ex.: Pode fazer isso: \033[1;37m\"./executável nc=255,255,255\033[0m\" que já está incluindo o argumento 'n' e o 'c').\
+\n\033[33m>\033[0m \e[3mh\e[23m (Ajuda|Help) Mostra esta tela de ajuda.\
+\n\033[33m>\033[0m \e[3mc=r,g,b\e[23m: (Cor) Define a cor que vai ser utilizada para mostrar o que tem de diferente no modo normal e o que tem de igual no modo de semelhança. \
 Com \e[3m`r`\e[23m, \e[3m`g`\e[23m, \e[3m`b`\e[23m, sendo as cores \e[1;31mvermelho\e[0m, \e[1;32mverde\e[0m, \e[1;34mazul\e[0m, respectivamente, sem digitar os `. (Nota: Não tem que necessariamente seguir o esquema de '=' e ',', pode apenas espaçar os sub-argumetos, porém faz mais sentido assim)\
-\n> \e[3ms\e[23m: (Semelhança) Em vez de comparar que as duas imagens possuem de diferente compara o que elas possuem de igual.\
-\n> \e[3mn\e[23m: (Nome) Se o programa deve pedir o nome final/de saída para o arquivo.\
-\n> \e[3mt=r,g,b\e[23m | \e[3mt=+~\e[23m: (Tolerancia) O quão diferente pode ser as cores antes de considera-las como diferente. \
+\n\033[33m>\033[0m \e[3ms\e[23m: (Semelhança) Em vez de comparar que as duas imagens possuem de diferente compara o que elas possuem de igual.\
+\n\033[33m>\033[0m \e[3mn\e[23m: (Nome) Se o programa deve pedir o nome final/de saída para o arquivo. Pode utilizar isso para evitar criar o arquivo não inserindo nome ou utilizando <Control+c>.\
+\n\033[33m>\033[0m \e[3mt=r,g,b\e[23m | \e[3mt=+~\e[23m: (Tolerancia) O quão diferente pode ser as cores antes de considera-las como diferente. \
 Pode ser utilizado passando 3 valores, que são as diferença para os valores rgb individualmente ou pode ser passado `\e[3m+~\e[23m` para a soma das diferenças. (Nota: Não tem que necessariamente seguir o esquema de '=' e ',', pode apenas espaçar os sub-argumetos, porém faz mais sentido assim)\
-\n> \e[3mr\e[23m: (\e[1m*Repetir\e[22m) \e[1mNão\e[22m repetir pedir nome ao não encontrar arquivo.. (Pode ser útil se se esse programa for chamado por outro já que o programa não vai digitar errado).\
-\n> \e[3mp\e[23m: (\e[1m*Profundidade\e[22m) Não sair se a profundidade de bits dos arquivos são diferentes (Nota: Isso pode gerar erros ao analisar as imagens).\n");
+\n\033[33m>\033[0m \e[3mr\e[23m: (\e[1m*Repetir\e[22m) \e[1mNão\e[22m repetir pedir nome ao não encontrar arquivo.. (Pode ser útil se se esse programa for chamado por outro já que o programa não vai digitar errado).\
+\n\033[33m>\033[0m \e[3mp\e[23m: (\e[1m*Profundidade\e[22m) \033[1mNão\033[22m sair se a profundidade de bits dos arquivos são diferentes (Nota: Isso pode gerar erros ao analisar as imagens).\n");
 				_exit(0);
 			}
 			else if (argumentos[i] == 'c') // Cor
@@ -115,7 +115,7 @@ Pode ser utilizado passando 3 valores, que são as diferença para os valores rg
 
 	char nome1[PATH_MAX];	// Não precisamos inicializar
 	char nome2[PATH_MAX];
-	char nomeFinal[PATH_MAX];
+	char nomeFinal[PATH_MAX] = {};
 	
 	
 	int hArquivo1;
@@ -353,7 +353,7 @@ repetir2:
 
 	if (nomeFinalUsuario)
 	{
-		print("Digite o nome para o arquivo final (Ctrl+c caso não deseje salvar o arquivo): ");
+		print("Digite o nome para o arquivo final (<Ctrl+c> ou <Enter> caso não deseje salvar o arquivo): ");
 		read(0, nomeFinal, PATH_MAX - 1);
 		for (int i = 0; i < PATH_MAX - 1; i++)
 			if (nomeFinal[i] == '\n')
@@ -365,8 +365,11 @@ repetir2:
 	else
 		copiar("final.ppm", nomeFinal);
 	
-	int hArquivo3 = open(nomeFinal, O_CREAT | O_TRUNC | O_RDWR, 0644);
-	write(hArquivo3, arquivoFinal, menorHeader.offset + menorHeader.largura * menorHeader.altura * 3);
+	if (nomeFinal[0] != 0)
+	{
+		int hArquivo3 = open(nomeFinal, O_CREAT | O_TRUNC | O_RDWR, 0644);
+		write(hArquivo3, arquivoFinal, menorHeader.offset + menorHeader.largura * menorHeader.altura * 3);
+	}
 
 	_exit(0);
 }
