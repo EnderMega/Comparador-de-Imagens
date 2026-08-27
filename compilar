@@ -1,2 +1,2 @@
 #g++ -static-libgcc -nostartfiles -nodefaultlibs -fno-builtin -fno-builtin-memset -mno-stack-arg-probe -fno-exceptions -fno-stack-protector -fno-asynchronous-unwind-tables -fno-unwind-tables main.cpp -o teste -e mmain -lc -lgcc -O3 $1
-g++ main.cpp extras/extras.cpp -o teste $1
+g++ main.cpp parsers/ppm.cpp utils/matematica.cpp utils/matriz.cpp -o teste $1

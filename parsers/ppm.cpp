@@ -1,4 +1,4 @@
-#include "../extras/extras.h"
+#include "../utils/matematica.h"
 #include "ppm.h"
 
 
@@ -82,7 +82,7 @@ bool parseHeaderPPM(unsigned char* arquivo, headerPPM* h)
 	return true;
 }
 
-int prepararHeaderPPM(unsigned char* arquivo, headerPPM* h)
+int prepararHeaderPPM(unsigned char* arquivo, headerPPM h, char sep)
 {
 	// Número mágico
 	arquivo[0] = 'P';
@@ -91,14 +91,30 @@ int prepararHeaderPPM(unsigned char* arquivo, headerPPM* h)
 	//      ^-+1-v
 	int offset = 3;
 
-	offset += mitoa2(h->largura, (char*)(arquivo + offset), 10);
-	arquivo[offset++] = ' ';
+	offset += mitoa2(h.largura, (char*)(arquivo + offset), 10);
+	arquivo[offset++] = sep;
 
-	offset += mitoa2(h->altura, (char*)(arquivo + offset), 10);
+	offset += mitoa2(h.altura, (char*)(arquivo + offset), 10);
 	arquivo[offset++] = '\n';
 
-	offset += mitoa2(h->maxVal, (char*)(arquivo + offset), 10);
+	offset += mitoa2(h.maxVal, (char*)(arquivo + offset), 10);
 	arquivo[offset++] = '\n';
 
 	return offset;
+}
+
+int calcOffset(headerPPM* h)
+{
+	// "P6\n" número mágico + ' ' + '\n' + '\n' (Se não entender, refira se a `prepararHeaderPPM()`)
+	h->offset = 6;
+
+	char temp[20];	// Pelo que e contei, 2^64 (long long) pode ter no máximo 20 casas decimais. Para esse caso não precisa do '\0'.
+
+	h->offset += mitoa2(h->largura, temp, 10);
+
+	h->offset += mitoa2(h->altura, temp, 10);
+
+	h->offset += mitoa2(h->maxVal, temp, 10);
+
+	return h->offset;
 }

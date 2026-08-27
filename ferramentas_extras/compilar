@@ -1,0 +1,1 @@
+g++ src_gerar_imagem.cpp ../utils/matematica.cpp ../parsers/ppm.cpp -o gerador $1
