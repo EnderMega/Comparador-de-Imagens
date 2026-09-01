@@ -24,7 +24,7 @@ int main()
 	print("Altura da imagem: ");
 	read(0, ladosStr[1], 20);
 	
-	int ladosInt[2] = { matoi((const char*)ladosStr[0]), matoi((const char*)ladosStr[0]) };
+	int ladosInt[2] = { matoi((const char*)ladosStr[0]), matoi((const char*)ladosStr[1]) };
 
 	constexpr int profundidade = 255;
 	constexpr int tamanhoProf = 3;
@@ -46,17 +46,17 @@ int main()
 		}
 	}
 
-	unsigned char* imagem = (unsigned char*)malloc(header.offset + header.largura * header.altura);
+	unsigned char* imagem = (unsigned char*)malloc(header.offset + header.largura * header.altura * 3);
 	prepararHeaderPPM(imagem, header);
 	for (int i = 0; i < header.largura * header.altura; i++)
 	{
-		imagem[header.offset + i + 0] = cor.r;
-		imagem[header.offset + i + 1] = cor.g;
-		imagem[header.offset + i + 2] = cor.b;
+		imagem[header.offset + i * 3 + 0] = cor.r;
+		imagem[header.offset + i * 3 + 1] = cor.g;
+		imagem[header.offset + i * 3 + 2] = cor.b;
 	}
 	
 	int fd = open("saidateste.ppm", O_CREAT | O_TRUNC | O_RDWR, 0644);
-	write(fd , imagem, header.offset + header.largura * header.altura);
+	write(fd , imagem, header.offset + header.largura * header.altura * 3);
 
 	_exit(0);
 }

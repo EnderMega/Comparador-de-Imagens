@@ -24,8 +24,12 @@
 
 
 
+enum {
+	R, G, B
+};
+
 struct rgb {
-	unsigned char r, g, b;
+	unsigned short r, g, b;
 } cor_diferenca = { 255, 0, 0 };
 
 rgb cor_semelhanca = { 0, 0, 0 };
@@ -33,7 +37,6 @@ rgb cor_tolerancia = { 0, 0, 0 };
 
 int main()
 {
-	bool cor_usuario = false;
 	bool semelhanca_usuario = false;
 	bool nomeFinalUsuario = false;
 	bool repetir = true;
@@ -83,7 +86,17 @@ Pode ser utilizado passando 3 valores, que são as diferença para os valores rg
 				for (int num = 0; num < 3; num++)
 				{
 					while (!(argumentos[i] >= '0' && argumentos[i] <= '9')) i++;
-					*(((unsigned char*)&cor_diferenca) + (num * sizeof(unsigned char))) = matoi(argumentos + i);	// Isso é muito gambiarra, mas funciona.
+					switch (num)
+					{
+						case 0:
+							cor_diferenca.r = matoi(argumentos + i);
+							break;
+						case 1:
+							cor_diferenca.g = matoi(argumentos + i);
+							break;
+						default:
+							cor_diferenca.b = matoi(argumentos + i);
+					}
 					while (argumentos[i] >= '0' && argumentos[i] <= '9') i++;
 
 					cor_semelhanca = cor_diferenca;
@@ -95,12 +108,22 @@ Pode ser utilizado passando 3 valores, que são as diferença para os valores rg
 				nomeFinalUsuario = true;
 			else if (argumentos[i] == 't')	// Tolerancia
 			{
-				while (!(argumentos[i] >= '0' && argumentos[i] <= '9' || argumentos[i] == '+')) i++;
+				while (!((argumentos[i] >= '0' && argumentos[i] <= '9') || argumentos[i] == '+')) i++;
 
 				for (int num = 0; num < 3; num++)
 				{
 					while (!(argumentos[i] >= '0' && argumentos[i] <= '9')) i++;
-					*(((unsigned char*)&cor_tolerancia) + (num * sizeof(unsigned char))) = matoi(argumentos + i);	// Isso é muito gambiarra, mas funciona.
+					switch (num)
+					{
+						case 0:
+							cor_tolerancia.r = matoi(argumentos + i);
+							break;
+						case 1:
+							cor_tolerancia.g = matoi(argumentos + i);
+							break;
+						default:
+							cor_tolerancia.b = matoi(argumentos + i);
+					}
 					while (argumentos[i] >= '0' && argumentos[i] <= '9') i++;
 				}
 			}
@@ -290,23 +313,33 @@ repetir2:
 	{
 		for (int j = 0; j < menorHeader.largura; j++)
 		{
-			// inicial <= final - t && final + t <= inicial [Nesse caso final é o pixel 2]
-			// if ((arquivo1[header1.offset + j * 3 + 0 + header1.largura * i * 3] <= arquivo2[header2.offset + j * 3 + 0 + header2.largura * i * 3] - cor_tolerancia.r &&
-			// 	arquivo2[header2.offset + j * 3 + 0 + header2.largura * i * 3] + cor_tolerancia.r <= arquivo1[header1.offset + j * 3 + 0 + header1.largura * i * 3]) &&
-			// 	// - - -
-			// 	(arquivo1[header1.offset + j * 3 + 1 + header1.largura * i * 3] <= arquivo2[header2.offset + j * 3 + 1 + header2.largura * i * 3] - cor_tolerancia.g &&
-			// 	arquivo2[header2.offset + j * 3 + 1 + header2.largura * i * 3] + cor_tolerancia.g <= arquivo1[header1.offset + j * 3 + 1 + header1.largura * i * 3]) &&
-			// 	// - - -
-			// 	(arquivo1[header1.offset + j * 3 + 2 + header1.largura * i * 3] <= arquivo2[header2.offset + j * 3 + 2 + header2.largura * i * 3] - cor_tolerancia.b &&
-			// 	arquivo2[header2.offset + j * 3 + 2 + header2.largura * i * 3] + cor_tolerancia.b <= arquivo1[header1.offset + j * 3 + 2 + header1.largura * i * 3]))
+			// Original
+			// if (pixel(arquivo1, header1, 0) == pixel(arquivo2, header2, 0) &&
+			// 	pixel(arquivo1, header1, 1) == pixel(arquivo2, header2, 1) &&
+			// 	pixel(arquivo1, header1, 2) == pixel(arquivo2, header2, 2))
+
+			//if ((short)c1 >= (short)c2 - t && (short)c2 + t >= c1)
+			// if ((short)pixel(arquivo1, header1, R) >= (short)pixel(arquivo2, header2, R) - cor_tolerancia.r &&
+			// 	(short)pixel(arquivo2, header2, R) + cor_tolerancia.r >= (short)pixel(arquivo1, header1, R)
+			// 	&&
+			// 	(short)pixel(arquivo1, header1, G) >= (short)pixel(arquivo2, header2, G) - cor_tolerancia.g &&
+			// 	(short)pixel(arquivo2, header2, G) + cor_tolerancia.g >= (short)pixel(arquivo1, header1, G)
+			// 	&&
+			// 	(short)pixel(arquivo1, header1, B) >= (short)pixel(arquivo2, header2, B) - cor_tolerancia.b &&
+			// 	(short)pixel(arquivo2, header2, B) + cor_tolerancia.b >= (short)pixel(arquivo1, header1, B)
+			//  )
+			short c1r = pixel(arquivo1, header1, R);
+			short c2r = pixel(arquivo2, header2, R);
 			
-			// if ((p1(0) <= p2(0) - cor_tolerancia.r && p2(0) + cor_tolerancia.r <= p1(0)) &&
-			// 	(p1(1) <= p2(1) - cor_tolerancia.g && p2(1) + cor_tolerancia.g <= p1(1)) &&
-			// 	(p1(2) <= p2(2) - cor_tolerancia.b && p2(2) + cor_tolerancia.b <= p1(2)) )
+			short c1g = pixel(arquivo1, header1, G);
+			short c2g = pixel(arquivo2, header2, G);
 			
-			if (pixel(arquivo1, header1, 0) == pixel(arquivo2, header2, 0) &&
-				pixel(arquivo1, header1, 1) == pixel(arquivo2, header2, 1) &&
-				pixel(arquivo1, header1, 2) == pixel(arquivo2, header2, 2))
+			short c1b = pixel(arquivo1, header1, B);
+			short c2b = pixel(arquivo2, header2, B);
+			if (c1r >= c2r - cor_tolerancia.r && c2r + cor_tolerancia.r >= c1r &&
+				c1g >= c2g - cor_tolerancia.g && c2g + cor_tolerancia.g >= c1g &&
+				c1b >= c2b - cor_tolerancia.b && c2b + cor_tolerancia.b >= c1b
+				)
 			{
 				if (semelhanca_usuario)
 				{
