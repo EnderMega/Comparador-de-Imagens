@@ -2,5 +2,6 @@ imgdiff
 *.ppm
 # Será que eu me importo com a pasta fotos? Já tá no histórico do git, caso alguém esteja curioso.
 /fotos/
+/erros/
 /ferramentas_extras/gerador
 /ferramentas_extras/saidateste.ppm
